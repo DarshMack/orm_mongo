@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Registration</title>
+  </head>
+  <body>
+    <form id="userForm" enctype="multipart/form-data">
+      <input type="text" name="name" placeholder="Name" required /><br />
+      <input type="text" name="mobile" placeholder="Mobile" required /><br />
+      <input
+        type="text"
+        name="referralCode"
+        placeholder="Referral Code"
+      /><br />
+
+      <label>Gender:</label>
+      <input type="radio" name="gender" value="Male" required /> Male
+      <input type="radio" name="gender" value="Female" /> Female <br />
+
+      <label>Technology:</label>
+      <input type="checkbox" name="technology" value="Nodejs" /> Nodejs
+      <input type="checkbox" name="technology" value="React" /> React
+      <input type="checkbox" name="technology" value="SQL" /> SQL <br />
+
+      <label>Profile Picture:</label>
+      <input type="file" name="profilePic" multiple /><br />
+
+      <label>Date of Birth:</label>
+      <input type="date" name="dob" required /><br />
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <h2>Submitted Data</h2>
+    <button onclick="fetchData()">Show Submitted Data</button>
+    <table border="1" id="dataTable" style="margin-top: 20px">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Mobile</th>
+          <th>Referral Code</th>
+          <th>Gender</th>
+          <th>Technology</th>
+          <th>Profile Pics</th>
+          <th>DOB</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      document
+        .getElementById("userForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+
+          const response = await fetch("http://localhost:3000/api/users", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: formData,
+          });
+
+          if (response.ok) alert("User saved successfully!");
+          else alert("Error saving user");
+        });
+
+      function formatDate(isoDate) {
+        const date = new Date(isoDate);
+        const day = String(date.getDate()).padStart(2, "0"); // Ensure 2 digits
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      }
+      // Fetch data from the server and display it in the table
+      async function fetchData() {
+        const response = await fetch("http://localhost:3000/api/user");
+        const data1 = await response.json(); // Parse JSON data
+
+        const data = data1.data.users;
+        const tableBody = document.querySelector("#dataTable tbody");
+        tableBody.innerHTML = ""; // Clear old data
+
+        data.forEach((user) => {
+          const profilePicsArray = user.profilePic;
+
+          const profilePics = profilePicsArray
+            .map(
+              (pic) =>
+                `<img src="http://localhost/project/mon_orm/orm_mongo/${pic}" alt="Profile Pic" width="50" height="50" style="margin: 5px;">`
+            )
+            .join("");
+          const formattedDob = formatDate(user.dob);
+          const row = `
+                  <tr>
+                      <td>${user._id}</td>
+                      <td>${user.name}</td>
+                      <td>${user.mobile}</td>
+                      <td>${user.referralCode}</td>
+                      <td>${user.gender}</td>
+                      <td>${user.technology}</td>
+                      <td>${profilePics}</td>
+                      <td>${formattedDob}</td>
+                  </tr>
+              `;
+          tableBody.innerHTML += row;
+        });
+      }
+    </script>
+  </body>
+</html>
